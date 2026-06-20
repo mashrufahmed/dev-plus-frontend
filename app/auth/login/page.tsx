@@ -10,7 +10,7 @@ export default function LoginPage() {
 
   const githubLoginHandler = () => {
     setLoading(true);
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github`;
+    window.location.href = '/api/auth/github';
   };
   return (
     <div className="min-h-screen flex flex-col">
