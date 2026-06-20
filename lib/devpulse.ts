@@ -93,17 +93,17 @@ export interface DevPulseBundle {
 }
 
 export async function getDashboardOverview() {
-  const response = await api.get('/dashboard/overview');
+  const response = await api.get('/api/dashboard/overview');
   return response.data.data as DevPulseBundle;
 }
 
 export async function getPublicProfile(username: string) {
-  const response = await api.get(`/profile/${username}`);
+  const response = await api.get(`/api/profile/${username}`);
   return response.data.data as DevPulseBundle;
 }
 
 export async function getCompare(userA: string, userB: string) {
-  const response = await api.get('/compare', {
+  const response = await api.get('/api/compare', {
     params: { a: userA, b: userB },
   });
 
@@ -114,26 +114,26 @@ export async function getCompare(userA: string, userB: string) {
 }
 
 export async function getSettings() {
-  const response = await api.get('/settings');
+  const response = await api.get('/api/settings');
   return response.data.data as DevPulseSettings;
 }
 
 export async function updateSettings(payload: DevPulseSettingsInput) {
-  const response = await api.patch('/settings', payload);
+  const response = await api.patch('/api/settings', payload);
   return response.data.data as DevPulseSettings;
 }
 
 export async function refreshProfile() {
-  const response = await api.post('/profile/refresh');
+  const response = await api.post('/api/profile/refresh');
   return response.data.data as DevPulseBundle;
 }
 
 export async function deleteAccount() {
-  const response = await api.delete('/settings/account');
+  const response = await api.delete('/api/settings/account');
   return response.data;
 }
 
 export async function logout() {
-  const response = await api.post('/auth/logout');
+  const response = await api.post('/api/auth/logout');
   return response.data;
 }
