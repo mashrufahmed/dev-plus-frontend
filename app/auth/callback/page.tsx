@@ -13,7 +13,7 @@ export default function CallbackPage() {
     const checkUser = async () => {
       try {
         setStatus('setting');
-        const res = await api.get('/api/user/me');
+        const res = await api.get('/user/me');
         if (res.status === 200) {
           setStatus('done');
           setTimeout(() => {
