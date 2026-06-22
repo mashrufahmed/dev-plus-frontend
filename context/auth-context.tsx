@@ -1,6 +1,6 @@
 'use client';
 
-import api from '@/lib/api-client';
+import { GET } from '@/lib/api-client';
 import { createContext, useEffect, useState } from 'react';
 import { logout as logoutRequest } from '@/lib/devpulse';
 
@@ -25,6 +25,11 @@ export interface ProfileSetting {
   public_profile: boolean;
 }
 
+interface AuthMeResponse {
+  user: User;
+  settings: ProfileSetting;
+}
+
 interface IAuthContext {
   user: User | null;
   loading: boolean;
@@ -45,20 +50,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getUser = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/user/me');
-        if (res.status !== 200) {
+        const res = await GET<AuthMeResponse>('/api/proxy/user/me');
+        if (res.error || !res.data) {
           return;
         }
-        setUser(res.data.data.user);
-        setProfile(res.data.data.settings);
-      } catch (error) {
+
+        setUser(res.data.user);
+        setProfile(res.data.settings);
+      } catch {
         setUser(null);
         setProfile(null);
       } finally {
         setLoading(false);
       }
     };
-    getUser();
+
+    void getUser();
   }, []);
 
   const logOut = async () => {
@@ -67,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await logoutRequest();
       setUser(null);
       setProfile(null);
-    } catch (error) {
+    } catch {
       setUser(null);
       setProfile(null);
     } finally {

@@ -1,4 +1,4 @@
-import api from '@/lib/api-client';
+import { request } from '@/lib/api-client';
 
 export interface DevPulseSettings {
   _id: string;
@@ -92,48 +92,63 @@ export interface DevPulseBundle {
   settings: DevPulseSettings;
 }
 
+async function authRequest<T>(endpoint: string, options?: RequestInit) {
+  return request<T>(`/api/proxy${endpoint}`, options);
+}
+
 export async function getDashboardOverview() {
-  const response = await api.get('/dashboard/overview');
-  return response.data.data as DevPulseBundle;
+  return authRequest<DevPulseBundle>('/dashboard/overview', {
+    method: 'GET',
+  });
 }
 
 export async function getPublicProfile(username: string) {
-  const response = await api.get(`/profile/${username}`);
-  return response.data.data as DevPulseBundle;
+  return authRequest<DevPulseBundle>(`/profile/${username}`, {
+    method: 'GET',
+  });
 }
 
 export async function getCompare(userA: string, userB: string) {
-  const response = await api.get('/compare', {
-    params: { a: userA, b: userB },
+  const searchParams = new URLSearchParams({
+    a: userA,
+    b: userB,
   });
 
-  return response.data.data as {
+  return authRequest<{
     user1: DevPulseBundle;
     user2: DevPulseBundle;
-  };
+  }>(`/compare?${searchParams.toString()}`, {
+    method: 'GET',
+  });
 }
 
 export async function getSettings() {
-  const response = await api.get('/settings');
-  return response.data.data as DevPulseSettings;
+  return authRequest<DevPulseSettings>('/settings', {
+    method: 'GET',
+  });
 }
 
 export async function updateSettings(payload: DevPulseSettingsInput) {
-  const response = await api.patch('/settings', payload);
-  return response.data.data as DevPulseSettings;
+  return authRequest<DevPulseSettings>('/settings', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function refreshProfile() {
-  const response = await api.post('/profile/refresh');
-  return response.data.data as DevPulseBundle;
+  return authRequest<DevPulseBundle>('/profile/refresh', {
+    method: 'POST',
+  });
 }
 
 export async function deleteAccount() {
-  const response = await api.delete('/settings/account');
-  return response.data;
+  return authRequest<unknown>('/settings/account', {
+    method: 'DELETE',
+  });
 }
 
 export async function logout() {
-  const response = await api.post('/auth/logout');
-  return response.data;
+  return authRequest<unknown>('/auth/logout', {
+    method: 'POST',
+  });
 }
