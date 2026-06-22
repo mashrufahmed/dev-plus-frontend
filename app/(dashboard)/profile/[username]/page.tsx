@@ -7,7 +7,7 @@ import { ProfileHeader } from '@/components/ProfileHeader';
 import { RepositoryTable } from '@/components/RepositoryTable';
 import { StatCard } from '@/components/StatCard';
 import { StreakCard } from '@/components/StreakCard';
-import { getPublicProfile } from '@/lib/devpulse';
+
 import { Database, Loader2, Share2, Users, Zap } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';

@@ -1,19 +1,17 @@
 'use client';
 
+import { getSettings, refreshProfile, updateSettings } from '@/action';
 import { Header } from '@/components/Header';
 import userAuth from '@/hooks/user-auth';
-import {
-  deleteAccount,
-  getSettings,
-  refreshProfile,
-  updateSettings,
-} from '@/lib/devpulse';
+import { DevPulseSettings } from '@/lib/devpulse';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Code, Eye, Lock, LogOut, RefreshCw, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function SettingsPage() {
-  const { user, profile, setProfile, logOut } = userAuth();
+  const { user } = userAuth();
   const router = useRouter();
 
   const [settings, setSettings] = useState({
@@ -24,40 +22,33 @@ export default function SettingsPage() {
     profilePublic: false,
   });
 
-  useEffect(() => {
-    if (!profile) return;
-
-    setSettings({
-      showLanguages: profile.show_languages,
-      showStreak: profile.show_streak,
-      showRepositories: profile.show_repos,
-      showActivity: profile.show_activity,
-      profilePublic: profile.public_profile,
-    });
-  }, [profile]);
-
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const syncSettings = async () => {
-      try {
-        const savedSettings = await getSettings();
-        setSettings({
-          showLanguages: savedSettings.show_languages,
-          showStreak: savedSettings.show_streak,
-          showRepositories: savedSettings.show_repos,
-          showActivity: savedSettings.show_activity,
-          profilePublic: savedSettings.public_profile,
-        });
-        setProfile(savedSettings);
-      } catch {
-        return;
-      }
-    };
+  const { data } = useQuery({
+    queryKey: ['get-setting'],
+    queryFn: async () => {
+      const res = await getSettings();
 
-    void syncSettings();
-  }, [setProfile]);
+      if (res.error) {
+        throw res.error;
+      }
+
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (!data) return;
+
+    setSettings({
+      showLanguages: data.show_languages,
+      showStreak: data.show_streak,
+      showRepositories: data.show_repos,
+      showActivity: data.show_activity,
+      profilePublic: data.public_profile,
+    });
+  }, [data]);
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings((prev) => ({
@@ -65,63 +56,87 @@ export default function SettingsPage() {
       [key]: !prev[key],
     }));
   };
+  const queryClient = useQueryClient();
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: DevPulseSettings) => {
+      const res = await updateSettings({
+        show_languages: data.show_languages,
+        show_streak: data.show_streak,
+        show_repos: data.show_repos,
+        show_activity: data.show_activity,
+        public_profile: data.public_profile,
+      });
+      if (res.error) {
+        throw res.error;
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      setMessage('Settings saved successfully.');
+
+      queryClient.invalidateQueries({
+        queryKey: ['me'],
+      });
+    },
+    onError: () => {
+      setMessage('Could not save settings right now.');
+    },
+  });
+
+  const refreshProfileMutation = useMutation({
+    mutationFn: async () => {
+      const res = await refreshProfile();
+      if (res.error) {
+        throw res.error;
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      setMessage('GitHub data refreshed successfully.');
+
+      queryClient.invalidateQueries({
+        queryKey: ['me'],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['github-profile'],
+      });
+    },
+    onError: () => {
+      setMessage('Refresh failed. Please try again in a moment.');
+    },
+  });
 
   const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      setMessage(null);
-      const updatedSettings = await updateSettings({
-        show_languages: settings.showLanguages,
-        show_streak: settings.showStreak,
-        show_repos: settings.showRepositories,
-        show_activity: settings.showActivity,
-        public_profile: settings.profilePublic,
-      });
-      setProfile(updatedSettings);
-      setMessage('Settings saved successfully.');
-    } catch {
-      setMessage('Could not save settings right now.');
-    } finally {
-      setIsSaving(false);
-    }
+    setMessage(null);
+
+    await updateSettingsMutation.mutateAsync({
+      _id: '',
+      show_languages: settings.showLanguages,
+      show_streak: settings.showStreak,
+      show_repos: settings.showRepositories,
+      show_activity: settings.showActivity,
+      public_profile: settings.profilePublic,
+    });
   };
 
   const handleRefresh = async () => {
-    try {
-      setMessage(null);
-      await refreshProfile();
-      setMessage('GitHub data refreshed successfully.');
-    } catch {
-      setMessage('Refresh failed. Please try again in a moment.');
-    }
+    setMessage(null);
+
+    await refreshProfileMutation.mutateAsync();
   };
 
   const handleLogout = async () => {
-    await logOut();
     router.replace('/');
   };
 
-  const handleDeleteAccount = async () => {
-    if (
-      confirm(
-        'Are you sure you want to delete your account? This action cannot be undone.',
-      )
-    ) {
-      try {
-        await deleteAccount();
-        router.replace('/');
-      } catch {
-        setMessage('Could not delete the account right now.');
-      }
-    }
-  };
   const convertData = (date: string) => {
-    const connectedDate = new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-    return connectedDate;
   };
 
   return (

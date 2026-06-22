@@ -238,6 +238,23 @@ index a6c8baf..e30a5ff 100644
 -  });
 +  return fetch('/api/logout', { method: 'POST' });
  }
+diff --git a/lib/server-client.ts b/lib/server-client.ts
+index d3cdd90..2839ae8 100644
+--- a/lib/server-client.ts
++++ b/lib/server-client.ts
+@@ -11,10 +11,11 @@ export async function WithAuthClient<T>(
+   const token = cookieStore.get('d_token');
+   return tryCatch<T, ApiError>(
+     request<T>(endpoint, {
++      ...options,
+       headers: {
++        ...(options?.headers as Record<string, string>),
+         Authorization: `Bearer ${token?.value}`,
+       },
+-      ...options,
+     }),
+   );
+ }
 diff --git a/app/api/logout/route.ts b/app/api/logout/route.ts
 new file mode 100644
 index 0000000..c4c87bb

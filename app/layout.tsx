@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/context/auth-context';
+import ReactQueryProvider from '@/components/react-query-provider';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background dark">
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <ReactQueryProvider>{children}</ReactQueryProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

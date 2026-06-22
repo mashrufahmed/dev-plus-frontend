@@ -1,18 +1,18 @@
 'use client';
 
 import userAuth from '@/hooks/user-auth';
-import { LogOut, Menu, Settings, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user: currentUser, logOut } = userAuth();
+  const { user: currentUser, profile } = userAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logOut();
+    // await logOut();
     router.replace('/');
   };
 
@@ -75,7 +75,7 @@ export function Header() {
 
           {/* User Menu / Auth */}
           <div className="flex items-center gap-4">
-            {currentUser ? (
+            {/* {currentUser ? (
               <div className="hidden gap-4 md:flex items-center">
                 <Link
                   href="/settings"
@@ -99,7 +99,7 @@ export function Header() {
               >
                 Sign in with GitHub
               </Link>
-            )}
+            )} */}
 
             {/* Mobile Menu Button */}
             <button
@@ -119,7 +119,7 @@ export function Header() {
         {menuOpen && (
           <nav className="border-t border-border pb-4 md:hidden">
             <div className="space-y-3 pt-4">
-              {currentUser ? (
+              {/* {currentUser ? (
                 <>
                   <Link
                     href="/dashboard"
@@ -167,7 +167,7 @@ export function Header() {
                     Sign in with GitHub
                   </Link>
                 </>
-              )}
+              )} */}
             </div>
           </nav>
         )}
