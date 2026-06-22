@@ -1,0 +1,283 @@
+diff --git a/app/(dashboard)/dashboard/page.tsx b/app/(dashboard)/dashboard/page.tsx
+index 60db50a..5a979ea 100644
+--- a/app/(dashboard)/dashboard/page.tsx
++++ b/app/(dashboard)/dashboard/page.tsx
+@@ -1,5 +1,3 @@
+-'use client';
+-
+ import { ActivityFeed } from '@/components/ActivityFeed';
+ import { ContributionChart } from '@/components/ContributionChart';
+ import { Header } from '@/components/Header';
+@@ -7,58 +5,44 @@ import { LanguageChart } from '@/components/LanguageChart';
+ import { RepositoryTable } from '@/components/RepositoryTable';
+ import { StatCard } from '@/components/StatCard';
+ import { StreakCard } from '@/components/StreakCard';
+-import { getDashboardOverview } from '@/lib/devpulse';
+-import userAuth from '@/hooks/user-auth';
+-import { Database, GitBranch, Loader2, Users, Zap } from 'lucide-react';
+-import { useEffect, useState } from 'react';
++import { WithAuthClient } from '@/lib/server-client';
++import { DevPulseBundle } from '@/lib/devpulse';
++import { Database, GitBranch, Users, Zap } from 'lucide-react';
++import { redirect } from 'next/navigation';
+ 
+-export default function DashboardPage() {
+-  const { user } = userAuth();
+-  const [dashboard, setDashboard] = useState<Awaited<ReturnType<typeof getDashboardOverview>> | null>(null);
+-  const [loading, setLoading] = useState(true);
+-  const [error, setError] = useState<string | null>(null);
++export default async function DashboardPage() {
++  const res = await WithAuthClient<DevPulseBundle>('/api/dashboard/overview', {
++    method: 'GET',
++  });
+ 
+-  useEffect(() => {
+-    const loadDashboard = async () => {
+-      try {
+-        setLoading(true);
+-        setError(null);
+-        const data = await getDashboardOverview();
+-        setDashboard(data);
+-      } catch (err) {
+-        setError('Could not load your GitHub analytics right now.');
+-      } finally {
+-        setLoading(false);
+-      }
+-    };
++  if (res.error || !res.data) {
++    redirect('/auth/login');
++  }
+ 
+-    void loadDashboard();
+-  }, []);
++  const dashboard = res.data;
+ 
+-  const stats = dashboard
+-    ? [
+-        {
+-          label: 'Total Repositories',
+-          value: dashboard.overview.totalRepos,
+-          icon: <Database className="h-6 w-6" />,
+-        },
+-        {
+-          label: 'Total Stars',
+-          value: dashboard.overview.totalStars,
+-          icon: <Zap className="h-6 w-6" />,
+-        },
+-        {
+-          label: 'Total Forks',
+-          value: dashboard.overview.totalForks,
+-          icon: <GitBranch className="h-6 w-6" />,
+-        },
+-        {
+-          label: 'Followers',
+-          value: dashboard.overview.followers,
+-          icon: <Users className="h-6 w-6" />,
+-        },
+-      ]
+-    : [];
++  const stats = [
++    {
++      label: 'Total Repositories',
++      value: dashboard.overview.totalRepos,
++      icon: <Database className="h-6 w-6" />,
++    },
++    {
++      label: 'Total Stars',
++      value: dashboard.overview.totalStars,
++      icon: <Zap className="h-6 w-6" />,
++    },
++    {
++      label: 'Total Forks',
++      value: dashboard.overview.totalForks,
++      icon: <GitBranch className="h-6 w-6" />,
++    },
++    {
++      label: 'Followers',
++      value: dashboard.overview.followers,
++      icon: <Users className="h-6 w-6" />,
++    },
++  ];
+ 
+   return (
+     <div className="min-h-screen flex flex-col">
+@@ -69,28 +53,13 @@ export default function DashboardPage() {
+           {/* Welcome Section */}
+           <div className="mb-8">
+             <h1 className="text-3xl font-bold text-foreground">
+-              Welcome back, {user?.name || dashboard?.profile.name || 'Developer'}!
++              Welcome back, {dashboard.profile.name || dashboard.profile.github_username}!
+             </h1>
+             <p className="mt-2 text-muted-foreground">
+               Here&apos;s your GitHub activity overview
+             </p>
+           </div>
+ 
+-          {loading && (
+-            <div className="rounded-lg border border-border bg-card p-10 text-center text-muted-foreground">
+-              <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-accent" />
+-              Syncing your GitHub analytics...
+-            </div>
+-          )}
+-
+-          {error && (
+-            <div className="mb-8 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+-              {error}
+-            </div>
+-          )}
+-
+-          {!loading && dashboard && (
+-            <>
+           {/* Stats Grid */}
+           <div className="mb-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+             {stats.map((stat, index) => (
+@@ -115,18 +84,13 @@ export default function DashboardPage() {
+ 
+           {/* Two Column Layout */}
+           <div className="grid gap-8 lg:grid-cols-3">
+-            {/* Main Content */}
+             <div className="lg:col-span-2">
+               <RepositoryTable repositories={dashboard.repositories} />
+             </div>
+-
+-            {/* Sidebar */}
+             <div>
+               <ActivityFeed activities={dashboard.activities} maxItems={5} />
+             </div>
+           </div>
+-            </>
+-          )}
+         </div>
+       </main>
+     </div>
+diff --git a/context/auth-context.tsx b/context/auth-context.tsx
+index 8fe644c..a40fd6a 100644
+--- a/context/auth-context.tsx
++++ b/context/auth-context.tsx
+@@ -1,7 +1,6 @@
+ 'use client';
+ 
+ import { logout as logoutRequest } from '@/lib/devpulse';
+-import { WithAuthClient } from '@/lib/server-client';
+ import { createContext, useEffect, useState } from 'react';
+ 
+ export interface User {
+@@ -11,7 +10,6 @@ export interface User {
+   name: string;
+   avatar_url: string;
+   email: string;
+-  github_access_token: string;
+   createdAt: string;
+   last_login_at: string;
+ }
+@@ -25,11 +23,6 @@ export interface ProfileSetting {
+   public_profile: boolean;
+ }
+ 
+-interface AuthMeResponse {
+-  user: User;
+-  settings: ProfileSetting;
+-}
+-
+ interface IAuthContext {
+   user: User | null;
+   loading: boolean;
+@@ -50,15 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+     const getUser = async () => {
+       try {
+         setLoading(true);
+-        const res = await WithAuthClient<AuthMeResponse>('/api/user/me', {
+-          method: 'GET',
+-        });
+-        if (res.error || !res.data) {
+-          return;
+-        }
+-
+-        setUser(res.data.user);
+-        setProfile(res.data.settings);
++        // /api/me is a Next.js route that reads the httpOnly cookie server-side
++        const res = await fetch('/api/me');
++        if (!res.ok) return;
++        const data = await res.json();
++        if (!data) return;
++        setUser(data.user);
++        setProfile(data.settings);
+       } catch {
+         setUser(null);
+         setProfile(null);
+@@ -84,14 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+     }
+   };
+ 
+-  const value = {
+-    user,
+-    profile,
+-    setUser,
+-    setProfile,
+-    loading,
+-    logOut,
+-  };
+-
+-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
++  return (
++    <AuthContext.Provider value={{ user, profile, setUser, setProfile, loading, logOut }}>
++      {children}
++    </AuthContext.Provider>
++  );
+ };
+diff --git a/lib/devpulse.ts b/lib/devpulse.ts
+index a6c8baf..e30a5ff 100644
+--- a/lib/devpulse.ts
++++ b/lib/devpulse.ts
+@@ -148,7 +148,5 @@ export async function deleteAccount() {
+ }
+ 
+ export async function logout() {
+-  return authRequest<unknown>('/auth/logout', {
+-    method: 'POST',
+-  });
++  return fetch('/api/logout', { method: 'POST' });
+ }
+diff --git a/app/api/logout/route.ts b/app/api/logout/route.ts
+new file mode 100644
+index 0000000..c4c87bb
+--- /dev/null
++++ b/app/api/logout/route.ts
+@@ -0,0 +1,12 @@
++import { WithAuthClient } from '@/lib/server-client';
++import { cookies } from 'next/headers';
++import { NextResponse } from 'next/server';
++
++export async function POST() {
++  await WithAuthClient('/api/auth/logout', { method: 'POST' });
++
++  const cookieStore = await cookies();
++  cookieStore.delete('d_token');
++
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/me/route.ts b/app/api/me/route.ts
+new file mode 100644
+index 0000000..38d6815
+--- /dev/null
++++ b/app/api/me/route.ts
+@@ -0,0 +1,19 @@
++import { WithAuthClient } from '@/lib/server-client';
++import { NextResponse } from 'next/server';
++
++interface AuthMeResponse {
++  user: object;
++  settings: object;
++}
++
++export async function GET() {
++  const res = await WithAuthClient<AuthMeResponse>('/api/user/me', {
++    method: 'GET',
++  });
++
++  if (res.error || !res.data) {
++    return NextResponse.json(null, { status: 401 });
++  }
++
++  return NextResponse.json(res.data);
++}

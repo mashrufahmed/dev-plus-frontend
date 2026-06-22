@@ -1,7 +1,6 @@
 'use client';
 
 import { logout as logoutRequest } from '@/lib/devpulse';
-import { WithAuthClient } from '@/lib/server-client';
 import { createContext, useEffect, useState } from 'react';
 
 export interface User {
@@ -11,7 +10,6 @@ export interface User {
   name: string;
   avatar_url: string;
   email: string;
-  github_access_token: string;
   createdAt: string;
   last_login_at: string;
 }
@@ -23,11 +21,6 @@ export interface ProfileSetting {
   show_repos: boolean;
   show_activity: boolean;
   public_profile: boolean;
-}
-
-interface AuthMeResponse {
-  user: User;
-  settings: ProfileSetting;
 }
 
 interface IAuthContext {
@@ -50,15 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getUser = async () => {
       try {
         setLoading(true);
-        const res = await WithAuthClient<AuthMeResponse>('/api/user/me', {
-          method: 'GET',
-        });
-        if (res.error || !res.data) {
-          return;
-        }
-
-        setUser(res.data.user);
-        setProfile(res.data.settings);
+        // /api/me is a Next.js route that reads the httpOnly cookie server-side
+        const res = await fetch('/api/me');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data) return;
+        setUser(data.user);
+        setProfile(data.settings);
       } catch {
         setUser(null);
         setProfile(null);
@@ -84,14 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const value = {
-    user,
-    profile,
-    setUser,
-    setProfile,
-    loading,
-    logOut,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, profile, setUser, setProfile, loading, logOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

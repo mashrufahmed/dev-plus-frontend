@@ -148,7 +148,5 @@ export async function deleteAccount() {
 }
 
 export async function logout() {
-  return authRequest<unknown>('/auth/logout', {
-    method: 'POST',
-  });
+  return fetch('/api/logout', { method: 'POST' });
 }
