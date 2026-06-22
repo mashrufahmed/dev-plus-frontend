@@ -1,8 +1,8 @@
 'use client';
 
-import { GET } from '@/lib/api-client';
-import { createContext, useEffect, useState } from 'react';
 import { logout as logoutRequest } from '@/lib/devpulse';
+import { WithAuthClient } from '@/lib/server-client';
+import { createContext, useEffect, useState } from 'react';
 
 export interface User {
   _id: string;
@@ -50,7 +50,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getUser = async () => {
       try {
         setLoading(true);
-        const res = await GET<AuthMeResponse>('/api/proxy/user/me');
+        const res = await WithAuthClient<AuthMeResponse>('/api/user/me', {
+          method: 'GET',
+        });
         if (res.error || !res.data) {
           return;
         }

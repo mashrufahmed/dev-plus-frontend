@@ -41,7 +41,7 @@ export class ApiError extends Error {
 // ==================
 // Base Config
 // ==================
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE_URL = '';
 
 const defaultHeaders: HeadersInit = {
   'Content-Type': 'application/json',

@@ -93,7 +93,7 @@ export interface DevPulseBundle {
 }
 
 async function authRequest<T>(endpoint: string, options?: RequestInit) {
-  return request<T>(`/api/proxy${endpoint}`, options);
+  return request<T>(`/api${endpoint}`, options);
 }
 
 export async function getDashboardOverview() {

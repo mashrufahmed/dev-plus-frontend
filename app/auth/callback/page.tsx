@@ -9,7 +9,7 @@ export default async function CallbackPage({ searchParams }: PageProps) {
   if (!code || Array.isArray(code)) {
     redirect('/auth/login');
   }
-  const res = await POST<{ token: string }>('/auth/exchange-token', {
+  const res = await POST<{ token: string }>('/api/auth/exchange-token', {
     token: code,
   });
   if (res.error) {
