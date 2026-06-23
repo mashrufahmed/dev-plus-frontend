@@ -1,6 +1,6 @@
 'use client';
 
-import { getSettings, refreshProfile, updateSettings } from '@/action';
+import { getSettings, logout, refreshProfile, updateSettings } from '@/action';
 import { Header } from '@/components/Header';
 import userAuth from '@/hooks/user-auth';
 import { DevPulseSettings } from '@/lib/devpulse';
@@ -128,6 +128,7 @@ export default function SettingsPage() {
   };
 
   const handleLogout = async () => {
+    await logout();
     router.replace('/');
   };
 

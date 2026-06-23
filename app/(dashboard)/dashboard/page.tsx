@@ -5,7 +5,6 @@ import { LanguageChart } from '@/components/LanguageChart';
 import { RepositoryTable } from '@/components/RepositoryTable';
 import { StatCard } from '@/components/StatCard';
 import { StreakCard } from '@/components/StreakCard';
-import userAuth from '@/hooks/user-auth';
 import { DevPulseBundle } from '@/lib/devpulse';
 import { WithAuthClient } from '@/lib/server-client';
 import { Database, GitBranch, Users, Zap } from 'lucide-react';
@@ -19,7 +18,6 @@ export default async function DashboardPage() {
   if (res.error || !res.data) {
     redirect('/auth/login');
   }
-
 
   const dashboard = res.data;
 

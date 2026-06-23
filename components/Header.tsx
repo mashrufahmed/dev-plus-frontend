@@ -1,18 +1,19 @@
 'use client';
 
+import { logout } from '@/action';
 import userAuth from '@/hooks/user-auth';
-import { Menu, X } from 'lucide-react';
+import { LogOut, Menu, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user: currentUser, profile } = userAuth();
+  const { user: currentUser } = userAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    // await logOut();
+    await logout();
     router.replace('/');
   };
 
@@ -75,7 +76,7 @@ export function Header() {
 
           {/* User Menu / Auth */}
           <div className="flex items-center gap-4">
-            {/* {currentUser ? (
+            {currentUser ? (
               <div className="hidden gap-4 md:flex items-center">
                 <Link
                   href="/settings"
@@ -99,7 +100,7 @@ export function Header() {
               >
                 Sign in with GitHub
               </Link>
-            )} */}
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -119,23 +120,26 @@ export function Header() {
         {menuOpen && (
           <nav className="border-t border-border pb-4 md:hidden">
             <div className="space-y-3 pt-4">
-              {/* {currentUser ? (
+              {currentUser ? (
                 <>
                   <Link
                     href="/dashboard"
                     className="block text-sm text-muted-foreground hover:text-foreground transition-colors px-0 py-2"
+                    onClick={() => setMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/compare"
                     className="block text-sm text-muted-foreground hover:text-foreground transition-colors px-0 py-2"
+                    onClick={() => setMenuOpen(false)}
                   >
                     Compare
                   </Link>
                   <Link
                     href="/settings"
                     className="block text-sm text-muted-foreground hover:text-foreground transition-colors px-0 py-2"
+                    onClick={() => setMenuOpen(false)}
                   >
                     Settings
                   </Link>
@@ -151,23 +155,26 @@ export function Header() {
                   <Link
                     href="#features"
                     className="block text-sm text-muted-foreground hover:text-foreground transition-colors px-0 py-2"
+                    onClick={() => setMenuOpen(false)}
                   >
                     Features
                   </Link>
                   <Link
                     href="#how-it-works"
                     className="block text-sm text-muted-foreground hover:text-foreground transition-colors px-0 py-2"
+                    onClick={() => setMenuOpen(false)}
                   >
                     How it works
                   </Link>
                   <Link
                     href="/auth/login"
                     className="block w-full rounded bg-accent px-4 py-2 text-center text-sm font-medium text-accent-foreground hover:opacity-90 transition-opacity"
+                    onClick={() => setMenuOpen(false)}
                   >
                     Sign in with GitHub
                   </Link>
                 </>
-              )} */}
+              )}
             </div>
           </nav>
         )}

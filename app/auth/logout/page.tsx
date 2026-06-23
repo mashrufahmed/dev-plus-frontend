@@ -1,27 +1,24 @@
 'use client'
 
+import { logout } from '@/action'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
-import userAuth from '@/hooks/user-auth'
 
 export default function LogoutPage() {
   const router = useRouter()
-  const { logOut } = userAuth()
 
   useEffect(() => {
     const logoutUser = async () => {
-      await logOut()
+      await logout()
       const timer = setTimeout(() => {
-        router.push('/')
+        router.replace('/')
       }, 1200)
-
       return () => clearTimeout(timer)
     }
-
     void logoutUser()
-  }, [logOut, router])
+  }, [router])
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">

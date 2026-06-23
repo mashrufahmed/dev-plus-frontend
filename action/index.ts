@@ -66,7 +66,7 @@ export async function getSettings() {
 
 export async function updateSettings(payload: DevPulseSettingsInput) {
   const res = await WithAuthClient<DevPulseSettings>('/api/settings', {
-    method: 'PATCH',
+    method: 'PUT',
     body: JSON.stringify(payload),
   });
 
@@ -121,9 +121,10 @@ export async function getCompare(userA: string, userB: string) {
 }
 
 export async function logout() {
-  const res = await WithAuthClient('/api/logout', {
-    method: 'POST',
-  });
+  // Call backend to invalidate session (best-effort)
+  await WithAuthClient('/api/auth/logout', { method: 'POST' });
 
-  return res;
+  // Clear the httpOnly auth cookie server-side
+  const cookieStore = await cookies();
+  cookieStore.delete(process.env.COOKIE_NAME!);
 }
